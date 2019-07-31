@@ -1,0 +1,12 @@
+<VirtualHost *:80>
+    ServerName localhost
+
+    WSGIDaemonProcess netant_rest user=apache group=apache threads=5
+    WSGIScriptAlias /netant_rest/rest /var/www/netant_rest/netant_rest.wsgi
+
+    <Directory /var/www/netant_rest>
+        WSGIProcessGroup netant
+        WSGIApplicationGroup %{GLOBAL}
+        Require all granted
+    </Directory>
+</VirtualHost>
