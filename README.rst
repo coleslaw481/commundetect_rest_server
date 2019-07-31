@@ -1,20 +1,19 @@
 ==========================================================
-netant_rest
+commundetect_rest
 ==========================================================
 
 
-.. image:: https://img.shields.io/pypi/v/netant_rest.svg
-        :target: https://pypi.python.org/pypi/netant_rest
+.. image:: https://img.shields.io/pypi/v/commundetect_rest.svg
+        :target: https://pypi.python.org/pypi/commundetect_rest
 
-.. image:: https://img.shields.io/travis/shfong/netant_rest.svg
-        :target: https://travis-ci.org/shfong/netant_rest
-
-
+.. image:: https://img.shields.io/travis/coleslaw481/commundetect_rest.svg
+        :target: https://travis-ci.org/coleslaw481/commundetect_rest
 
 
-NetAnt REST Server
 
-`For more information please click here to visit our wiki <https://github.com/shfong/netant_rest/wiki>`_
+Community Detection REST Server
+
+`For more information please click here to visit our wiki <https://github.com/coleslaw481/commundetect_rest/wiki>`_
 
 
 Compatibility
@@ -43,7 +42,7 @@ It is highly reccommended one use `Anaconda <https://www.anaconda.com/>`_ for Py
 
 .. code:: bash
 
-  git clone https://github.com/shfong/netant_rest.git
+  git clone https://github.com/coleslaw481/commundetect_rest.git
   cd netant_rest
   make install
 
@@ -61,17 +60,13 @@ Running service in development mode
   echo "SLEEP_TIME_KEY = 10" >> myconfig.cfg
 
   # Set environment variable to config file just created
-  export NETANT_REST_SETTINGS=`pwd`/myconfig.cfg
+  export COMMUNDETECT_REST_SETTINGS=`pwd`/myconfig.cfg
 
   # It is assumed the application has been installed as described above
   export FLASK_APP=netant_rest
   flask run # --host=0.0.0.0 can be added to allow all access from interfaces
   
   # Service will be running on http://localhost:5000
-
-  # in another terminal run the following to start the task runner
-  # the -vvvv increases log verbosity
-  netant_taskrunner.py --nodaemon -vvvvv `pwd`/foo
 
 
 Example usage of service
@@ -86,7 +81,7 @@ TODO
 Bugs
 -----
 
-Please report them `here <https://github.com/shfong/netant_rest/issues>`_
+Please report them `here <https://github.com/coleslaw481/commundetect_rest/issues>`_
 
 Acknowledgements
 ----------------
