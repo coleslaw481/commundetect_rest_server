@@ -71,7 +71,9 @@ ERROR_PARAM = 'error'
 # Task specific parameters
 ALGO_PARAM = 'algorithm'
 
-EDGE_PARAM = 'edgelist'
+EDGE_PARAM = 'edgefile'
+
+EDGE_FILE = 'edgefile.txt'
 
 GRAPHDIRECTED_PARAM = 'graphdirected'
 
@@ -153,7 +155,7 @@ post_parser.add_argument(
 post_parser.add_argument(
     EDGE_PARAM,
     type=reqparse.FileStorage,
-    help='Edge list as file',
+    help='Edge list as file in format of edge1\\tedge2\\nedge3\\tedge4\\n',
     required=True,
     location='files'
 )
@@ -241,13 +243,17 @@ class TaskBasedRestApp(Resource):
                                                            app.config[JOB_PATH_KEY],
                                                            params[GRAPHDIRECTED_PARAM]],
                                                      retry=False, expires=120,
-                                                     countdown=2)
-            app.logger.debug('edge list file: ' +
-                             str(params[EDGE_PARAM]))
-            e_path = os.path.join(app.config[JOB_PATH_KEY], res.id)
-            with open(e_path, 'wb') as f:
+                                                     counter=1)
+
+            jobdir = os.path.join(app.config[JOB_PATH_KEY], res.id)
+            os.makedirs(jobdir, mode=0o755)
+            edgefile = os.path.join(jobdir, EDGE_FILE)
+            edgefiletmp = edgefile + '.tmp'
+            with open(edgefiletmp, 'wb') as f:
                 shutil.copyfileobj(params[EDGE_PARAM].stream, f)
                 f.flush()
+
+            shutil.move(edgefiletmp, edgefile)
             task = SimpleTask(res.id)
             return marshal(task, TaskBasedRestApp.taskobj), 202,\
                    {'Location': 'v1/' + task.id}
