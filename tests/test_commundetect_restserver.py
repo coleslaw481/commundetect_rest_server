@@ -8,8 +8,6 @@ import json
 import unittest
 import shutil
 import tempfile
-import io
-import uuid
 import re
 from werkzeug.datastructures import FileStorage
 import commundetect_rest

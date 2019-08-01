@@ -1,12 +1,10 @@
 
 import logging
 import subprocess
-import requests
 from celery import Celery
-from celery import bootsteps
 
 celeryapp = Celery('tasks', broker='pyamqp://guest@localhost:5672//',
-             backend='redis://localhost')
+                   backend='redis://localhost')
 
 celeryapp.conf.update(
     task_track_started=True,
@@ -39,18 +37,20 @@ def run_docker(self):
     out, err = p.communicate()
     return p.returncode, out, err
 
+
 @celeryapp.task(bind=True)
-def run_communitydetection(self, taskdict):
+def run_communitydetection(self, algorithm, edge_basedir, directed):
         """
-        Hits netant REST service and gets results
+        Runs community detection algorithm
 
         :param self:
         :param taskdict:
         :return:
         """
-        logger.info('Starting task with docker:')
-        self.update_state(state='PROCESSING', meta=taskdict)
-        taskdict['result'] = {'cx': 'hi'}
-        taskdict['status'] = 'done'
+        logger.info('Starting task (' + self.request.id + ') ' + str(algorithm))
+        logger.info(' basedir: ' + edge_basedir)
+        logger.info(' directed:' + str(directed))
+        self.update_state(state='PROCESSING', meta=algorithm)
+
         logger.info('Done with task: ')
-        return taskdict
+        return 'hello there'

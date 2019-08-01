@@ -5,6 +5,7 @@ __email__ = "cchuras@ucsd.edu"
 __version__ = "0.1.0"
 
 import os
+import shutil
 from datetime import datetime
 import flask
 from flask import Flask, jsonify, request
@@ -33,9 +34,6 @@ DISKFULL_CUTOFF_KEY = 'DISKFULL_CUTOFF'
 DEFAULT_RATE_LIMIT_KEY = 'DEFAULT_RATE_LIMIT'
 GET_RATE_LIMIT_KEY = 'GET_RATE_LIMIT'
 
-
-TASK_JSON = 'task.json'
-NETWORK_DATA = 'network.data'
 LOCATION = 'Location'
 RESULT = 'result.json'
 
@@ -67,29 +65,15 @@ COMMUNDETECT_NS = 'cd'
 REST_VERSION_KEY = 'rest_version'
 ALGO_VERSION_KEY = 'algorithm_version'
 
-ALPHA_PARAM = 'alpha'
-NETWORK_PARAM = 'network'
-NDEX_PARAM = 'ndex'
 REMOTEIP_PARAM = 'remoteip'
-UUID_PARAM = 'uuid'
 ERROR_PARAM = 'error'
-WINDOW_PARAM = 'window'
 
 # Task specific parameters
-DISEASE_PARAM = 'disease'
-GENE_PARAM = 'gene'
-DRUG_PARAM = 'drug'
-FUNCTION_PARAM = 'function'
-MAXNODE_PARAM = 'nummaxnode'
-MINFREQ_PARAM = 'minfreqcutoff'
-NDEXSERVER_PARAM = 'ndexserver'
-NDEXUSER_PARAM = 'ndexuser'
-NDEXPASS_PARAM = 'ndexpass'
-NDEXNAME_PARAM = 'ndexname'
-FAKEOUTPUT_PARAM = 'fakeoutput'
+ALGO_PARAM = 'algorithm'
 
-# Types of tasks (only one for now)
-NETANT_TASK = 'netant_task'
+EDGE_PARAM = 'edgelist'
+
+GRAPHDIRECTED_PARAM = 'graphdirected'
 
 RESULTKEY_KEY = 'resultkey'
 RESULTVALUE_KEY = 'resultvalue'
@@ -157,44 +141,28 @@ class SimpleTask(object):
 
 post_parser = reqparse.RequestParser()
 post_parser.add_argument(
-    DISEASE_PARAM,
+    ALGO_PARAM,
     type=str,
-    help='Disease name, for multiple use comma delimiter',
-    default='inflamm',
+    choices=['infomap', 'louvain'],
+    help='algorithm to use',
+    default='infomap',
     required=True,
     location='form'
 )
+
 post_parser.add_argument(
-    GENE_PARAM,
-    type=str,
-    help='Gene name, for multiple use comma delimiter',
-    default='*',
-    location='form'
+    EDGE_PARAM,
+    type=reqparse.FileStorage,
+    help='Edge list as file',
+    required=True,
+    location='files'
 )
+
 post_parser.add_argument(
-    FUNCTION_PARAM,
-    type=str,
-    help='Function name, for multiple use comma delimiter',
-    location='form'
-)
-post_parser.add_argument(
-    DRUG_PARAM,
-    type=str,
-    help='Drug name, for multiple use comma delimiter',
-    location='form'
-)
-post_parser.add_argument(
-    MAXNODE_PARAM,
-    type=int,
-    help='Maximum node number (for search I think)',
-    default=5,
-    location='form'
-)
-post_parser.add_argument(
-    MINFREQ_PARAM,
-    type=int,
-    help='Minimum frequency cutoff',
-    default=15,
+    GRAPHDIRECTED_PARAM,
+    type=bool,
+    help='If set to True then graph is directed',
+    default=False,
     location='form'
 )
 
@@ -269,7 +237,17 @@ class TaskBasedRestApp(Resource):
 
         try:
             params = post_parser.parse_args(request, strict=True)
-            res = run_communitydetection.apply_async(args=[params], retry=False, expires=120)
+            res = run_communitydetection.apply_async(args=[params[ALGO_PARAM],
+                                                           app.config[JOB_PATH_KEY],
+                                                           params[GRAPHDIRECTED_PARAM]],
+                                                     retry=False, expires=120,
+                                                     countdown=2)
+            app.logger.debug('edge list file: ' +
+                             str(params[EDGE_PARAM]))
+            e_path = os.path.join(app.config[JOB_PATH_KEY], res.id)
+            with open(e_path, 'wb') as f:
+                shutil.copyfileobj(params[EDGE_PARAM].stream, f)
+                f.flush()
             task = SimpleTask(res.id)
             return marshal(task, TaskBasedRestApp.taskobj), 202,\
                    {'Location': 'v1/' + task.id}
