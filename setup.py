@@ -54,7 +54,7 @@ setup(
     include_package_data=True,
     keywords='Community Detection',
     name='commundetect_rest',
-    packages=find_packages(include=['commundetect_rest_server']),
+    packages=find_packages(include=['commundetect_rest']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
