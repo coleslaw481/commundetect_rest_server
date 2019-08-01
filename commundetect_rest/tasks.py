@@ -30,10 +30,14 @@ def run_infomap_cmd(workdir, args):
     :param cmd_to_run: command to run as list
     :return:
     """
+    # to run as current user add this to list below before
+    # coleslawndex/infomap
+    # '--user', str(os.getuid()) + ':' + str(os.getgid()),
     cmd = ['docker', 'run',
            '-v', workdir + ':' + workdir,
            'coleslawndex/infomap']
     cmd.extend(args)
+    logger.info('Running command: ' + ' '.join(cmd))
     p = subprocess.Popen(cmd,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
@@ -158,8 +162,7 @@ def run_communitydetection(self, algorithm, basedir, directed):
         try:
             if algorithm == 'infomap':
                 self.update_state(state='PROCESSING',
-                                  meta='Creating temporary file to '
-                                       'hold edge list')
+                                  meta={'message': 'Creating temporary file to hold edge list'})
                 edgelist_file = os.path.join(basedir, self.request.id,
                                              'edgefile.txt')
                 while not os.path.exists(edgelist_file):
@@ -167,7 +170,7 @@ def run_communitydetection(self, algorithm, basedir, directed):
                     time.sleep(0.1)
 
                 self.update_state(state='PROCESSING',
-                                  meta='Running infomap')
+                                  meta={'message': 'Running infomap'})
                 errmsg, finalresult = run_infomap(edgelist_file,
                                                   taskdir, directed=directed)
             else:
@@ -186,4 +189,4 @@ def run_communitydetection(self, algorithm, basedir, directed):
             return resultdict
         finally:
             logger.debug('Deleting directory: ' + taskdir)
-            # shutil.rmtree(taskdir)
+            shutil.rmtree(taskdir)

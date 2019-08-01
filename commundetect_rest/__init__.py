@@ -6,6 +6,7 @@ __version__ = "0.1.0"
 
 import os
 import shutil
+import time
 from datetime import datetime
 import flask
 from flask import Flask, jsonify, request
@@ -246,17 +247,30 @@ class TaskBasedRestApp(Resource):
                                                      counter=1)
 
             jobdir = os.path.join(app.config[JOB_PATH_KEY], res.id)
-            os.makedirs(jobdir, mode=0o755)
+            os.makedirs(jobdir, mode=0o775)
+
+            counter = 0
+            while not os.path.exists(jobdir):
+                app.logger.debug('Waiting for directory to appear')
+                time.sleep(0.1)
+                if counter > 10:
+                    raise Exception('Even after 10 seconds the directory: ' +
+                                    jobdir + ' did not get created')
+                counter = counter + 1
+
+            os.chmod(jobdir, mode=0o775)
+
             edgefile = os.path.join(jobdir, EDGE_FILE)
             edgefiletmp = edgefile + '.tmp'
             with open(edgefiletmp, 'wb') as f:
                 shutil.copyfileobj(params[EDGE_PARAM].stream, f)
                 f.flush()
-
+            os.chmod(edgefiletmp, mode=0o775)
             shutil.move(edgefiletmp, edgefile)
+
             task = SimpleTask(res.id)
             return marshal(task, TaskBasedRestApp.taskobj), 202,\
-                   {'Location': 'v1/' + task.id}
+                   {'Location': request.url + '/' + task.id}
         except Exception as ea:
             app.logger.exception('Error creating task due to Exception ' +
                                  str(ea))
