@@ -146,6 +146,59 @@ def run_infomap(edgelistfile, outdir='.', overlap=False, directed=False):
     return None, result
 
 
+def run_algo_cmd(imagename, workdir, args):
+    """
+    Runs docker
+
+    :param cmd_to_run: command to run as list
+    :return:
+    """
+    # to run as current user add this to list below before
+    # coleslawndex/infomap
+    # '--user', str(os.getuid()) + ':' + str(os.getgid()),
+    cmd = ['docker', 'run',
+           '-v', workdir + ':' + workdir,
+           imagename]
+    cmd.extend(args)
+    logger.info('Running command: ' + ' '.join(cmd))
+    p = subprocess.Popen(cmd,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+
+    out, err = p.communicate()
+    return p.returncode, out, err
+
+
+def run_algo(algorithm, edgelist_file,taskdir, directed=False):
+    """
+    Runs algorithm
+
+    :param algorithm:
+    :param edgelist_file:
+    :param taskdir:
+    :param directed:
+    :return:
+    """
+    # TODO need a configuration file to provide mapping of algorithm name with
+    #      docker image and additional custom flags etc...
+    if algorithm == 'louvain':
+        imagename = 'coleslawndex/testlouvain'
+    else:
+        return algorithm + ' is not supported', None
+
+    cmdargs = [edgelist_file]
+    if directed is True:
+        cmdargs.append('--directed')
+
+    ecode, out, err = run_algo_cmd(imagename, taskdir, cmdargs)
+
+    if ecode != 0:
+        logger.error('Command failed' + str(err))
+        return 'Command failed with non-zero exit code: ' + str(ecode), None
+
+    return None, out.decode("utf-8")
+
+
 @celeryapp.task(bind=True)
 def run_communitydetection(self, algorithm, basedir, directed):
         """
@@ -160,21 +213,22 @@ def run_communitydetection(self, algorithm, basedir, directed):
         taskdir = os.path.join(basedir, self.request.id)
         logger.debug('Created directory: ' + taskdir)
         try:
-            if algorithm == 'infomap':
-                self.update_state(state='PROCESSING',
-                                  meta={'message': 'Creating temporary file to hold edge list'})
-                edgelist_file = os.path.join(basedir, self.request.id,
-                                             'edgefile.txt')
-                while not os.path.exists(edgelist_file):
-                    logger.debug('Waiting for file: ' + edgelist_file + ' to appear')
-                    time.sleep(0.1)
+            self.update_state(state='PROCESSING',
+                              meta={'message': 'Creating temporary file to hold edge list'})
+            edgelist_file = os.path.join(basedir, self.request.id,
+                                         'edgefile.txt')
+            while not os.path.exists(edgelist_file):
+                logger.debug('Waiting for file: ' + edgelist_file + ' to appear')
+                time.sleep(0.1)
 
-                self.update_state(state='PROCESSING',
-                                  meta={'message': 'Running infomap'})
+            self.update_state(state='PROCESSING',
+                              meta={'message': 'Running ' + algorithm})
+            if algorithm == 'infomap':
                 errmsg, finalresult = run_infomap(edgelist_file,
                                                   taskdir, directed=directed)
             else:
-                errmsg = algorithm + ' is not yet supported'
+                errmsg, finalresult = run_algo(algorithm, edgelist_file,
+                                               taskdir, directed=directed)
             logger.debug('Done with task')
 
             resultdict = {}
