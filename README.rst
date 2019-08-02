@@ -26,6 +26,11 @@ Dependencies to run
 
  * `flask <https://pypi.org/project/flask/>`_
  * `flask-restplus <https://pypi.org/project/flast-restplus>`_
+ * numpy
+ * celery
+ * docker (needed to run the community detection algorithms)
+ * redis (needed by celery to store results)
+ * rabbitmq (needed by celery as a message broker)
 
 Additional dependencies to build
 --------------------------------
@@ -43,30 +48,72 @@ It is highly reccommended one use `Anaconda <https://www.anaconda.com/>`_ for Py
 .. code:: bash
 
   git clone https://github.com/coleslaw481/commundetect_rest.git
-  cd netant_rest
+  cd commundetect_rest
   make install
 
-Running service in development mode
------------------------------------
+Running REST service in development mode
+-----------------------------------------
 
+**NOTE:** Example below runs the REST service and **NOT** the worker which involves steps in next section
 
-**NOTE:** Example below runs the REST service and not the task runner.
+**Step 1** Create configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Open a terminal and create a configuration file denoting
+where to write temporary files for processing
 
 .. code:: bash
 
-  mkdir -p foo/submitted foo/processing foo/done foo/delete_requests
+  mkdir -p foo/
   echo "JOB_PATH_KEY = `pwd`/foo" > myconfig.cfg
-  echo "WAIT_COUNT_KEY = 600" >> myconfig.cfg
-  echo "SLEEP_TIME_KEY = 10" >> myconfig.cfg
+
+**Step 2** Run server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: bash
 
   # Set environment variable to config file just created
   export COMMUNDETECT_REST_SETTINGS=`pwd`/myconfig.cfg
 
   # It is assumed the application has been installed as described above
-  export FLASK_APP=netant_rest
+  export FLASK_APP=commundetect_rest
   flask run # --host=0.0.0.0 can be added to allow all access from interfaces
   
   # Service will be running on http://localhost:5000
+
+
+Running worker in development mode
+------------------------------------
+
+Assuming rest service is up in previous step then the following operations
+will spin up a worker capable of processing requests on the local machine
+
+
+Step 1 Spin up redis and rabbitmq daemons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Open a new terminal and run the following commands to
+use docker to spin up redis and rabbitmq services as daemons
+
+.. code:: bash
+
+   docker run -d -p 5672:5672 rabbitmq
+   docker run -d -p 6379:6379 redis
+
+To see these daemons invoke ``docker ps -a`` and to stop them you can run ``docker stop <container id>``
+
+
+Step 2 Start worker
+~~~~~~~~~~~~~~~~~~~~~~
+
+In the terminal run this command and leave running to process tasks
+
+.. code:: bash
+
+   celery -A commundetect_rest.tasks worker -c 1  --loglevel=INFO -Q communitydetection
+
+**NOTE:** The ``-c`` denotes number of workers to run concurrently
+
 
 
 Example usage of service

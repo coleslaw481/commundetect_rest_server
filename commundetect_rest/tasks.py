@@ -200,7 +200,7 @@ def run_algo(algorithm, edgelist_file,taskdir, directed=False):
 
 
 @celeryapp.task(bind=True)
-def run_communitydetection(self, algorithm, basedir, directed):
+def run_communitydetection(self, algorithm, basedir, directed, rootnetwork):
         """
         Runs community detection algorithm
 
@@ -232,6 +232,8 @@ def run_communitydetection(self, algorithm, basedir, directed):
             logger.debug('Done with task')
 
             resultdict = {}
+            resultdict['rootnetwork'] = rootnetwork
+
             if errmsg is not None:
                 resultdict['status'] = 'error'
                 resultdict['message'] = errmsg

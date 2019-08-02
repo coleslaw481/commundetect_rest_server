@@ -2,7 +2,7 @@
 
 __author__ = """Chris Churas"""
 __email__ = "cchuras@ucsd.edu"
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 import os
 import shutil
@@ -75,6 +75,8 @@ ALGO_PARAM = 'algorithm'
 EDGE_PARAM = 'edgefile'
 
 EDGE_FILE = 'edgefile.txt'
+
+ROOTNETWORK_PARAM = 'rootnetwork'
 
 GRAPHDIRECTED_PARAM = 'graphdirected'
 
@@ -168,6 +170,12 @@ post_parser.add_argument(
     default=False,
     location='form'
 )
+post_parser.add_argument(
+    ROOTNETWORK_PARAM,
+    type=str,
+    help='Name of root network, will just be returned in result',
+    location='form'
+)
 
 ERROR_RESP = api.model('ErrorResponseSchema', {
     'errorCode': fields.String(description='Error code to help identify '
@@ -242,7 +250,8 @@ class TaskBasedRestApp(Resource):
             params = post_parser.parse_args(request, strict=True)
             res = run_communitydetection.apply_async(args=[params[ALGO_PARAM],
                                                            app.config[JOB_PATH_KEY],
-                                                           params[GRAPHDIRECTED_PARAM]],
+                                                           params[GRAPHDIRECTED_PARAM],
+                                                           params[ROOTNETWORK_PARAM]],
                                                      retry=False, expires=120,
                                                      counter=1)
 
