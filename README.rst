@@ -56,7 +56,7 @@ Running REST service in development mode
 
 **NOTE:** Example below runs the REST service and **NOT** the worker which involves steps in next section
 
-**Step 1** Create configuration
+Step 1 Create configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Open a terminal and create a configuration file denoting
@@ -65,9 +65,22 @@ where to write temporary files for processing
 .. code:: bash
 
   mkdir -p foo/
-  echo "JOB_PATH_KEY = `pwd`/foo" > myconfig.cfg
+  echo "JOB_PATH = \"`pwd`/foo\"" > myconfig.cfg
 
-**Step 2** Run server
+Step 2 Spin up redis and rabbitmq daemons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Open a new terminal and run the following commands to
+use docker to spin up redis and rabbitmq services as daemons
+
+.. code:: bash
+
+   docker run -d -p 5672:5672 rabbitmq
+   docker run -d -p 6379:6379 redis
+
+To see these daemons invoke ``docker ps -a`` and to stop them you can run ``docker stop <container id>``
+
+Step 3 Run REST server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: bash
@@ -81,29 +94,7 @@ where to write temporary files for processing
   
   # Service will be running on http://localhost:5000
 
-
-Running worker in development mode
-------------------------------------
-
-Assuming rest service is up in previous step then the following operations
-will spin up a worker capable of processing requests on the local machine
-
-
-Step 1 Spin up redis and rabbitmq daemons
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Open a new terminal and run the following commands to
-use docker to spin up redis and rabbitmq services as daemons
-
-.. code:: bash
-
-   docker run -d -p 5672:5672 rabbitmq
-   docker run -d -p 6379:6379 redis
-
-To see these daemons invoke ``docker ps -a`` and to stop them you can run ``docker stop <container id>``
-
-
-Step 2 Start worker
+Step 4 Start worker
 ~~~~~~~~~~~~~~~~~~~~~~
 
 In the terminal run this command and leave running to process tasks
