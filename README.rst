@@ -47,8 +47,8 @@ It is highly reccommended one use `Anaconda <https://www.anaconda.com/>`_ for Py
 
 .. code:: bash
 
-  git clone https://github.com/coleslaw481/commundetect_rest.git
-  cd commundetect_rest
+  git clone https://github.com/coleslaw481/commundetect_rest_server.git
+  cd commundetect_rest_server
   make install
 
 Running REST service in development mode
