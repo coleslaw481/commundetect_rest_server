@@ -1,3 +1,12 @@
+
+
+
+**This server has been replaced by:** 
+
+https://github.com/cytoscape/communitydetection-rest-server
+
+
+
 ==========================================================
 commundetect_rest
 ==========================================================
